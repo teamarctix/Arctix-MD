@@ -1,4 +1,4 @@
-name: Node.js CI with Cloudflare Tunnel
+name: Node.js CI with Persistent Cloudflare Tunnel
 
 on:
   workflow_dispatch:
@@ -24,8 +24,9 @@ jobs:
       run: npm install
 
     - name: Start Node.js app
-      run: npm start &
-      # run in background
+      run: |
+        npm start &
+        echo "Node.js app started on port 3000"
 
     - name: Install official cloudflared
       run: |
@@ -35,8 +36,12 @@ jobs:
 
     - name: Start Cloudflare Tunnel (no token)
       run: |
-        # Start tunnel and log URL
+        # Start tunnel in background and log URL
         cloudflared tunnel --url http://localhost:3000 > tunnel.log 2>&1 &
-        sleep 5
-        # Print the public URL
-        grep -oE 'https://.*trycloudflare.com' tunnel.log
+        echo "Tunnel started, waiting for URL..."
+        # Wait for tunnel URL to appear in log
+        while ! grep -q 'https://.*trycloudflare.com' tunnel.log; do
+          sleep 1
+        done
+        # Continuously output the URL in logs
+        tail -f tunnel.log | grep --line-buffered -oE 'https://.*trycloudflare.com'
