@@ -130,7 +130,7 @@ async function startBot() {
             console.log("📲 New QR generated, scan from web!");
             console.log("Also You Can Scan From Terminal");
             console.log("\n📲 Scan this QR in WhatsApp:\n");
-            console.log(await qrcode.toString(qr, { type: "terminal", small: true, margin: 1 }));
+            console.log(await qrcode.toString(qr, { type: "terminal"}));
 
 
         }
