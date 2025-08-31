@@ -29,10 +29,15 @@ jobs:
     - name: Start Cloudflare Tunnel (no token)
       run: |
         echo "Starting Cloudflare Tunnel..."
-        # Start tunnel in background and fetch URL
-        TUNNEL_URL=$(cloudflared tunnel --url http://localhost:3000 --no-autoupdate --print-url &)
-        echo "🚀 Public tunnel URL: $TUNNEL_URL"
-        sleep 2  # give tunnel a moment to initialize
+        # Start tunnel in background and log output
+        cloudflared tunnel --url http://localhost:3000 --no-autoupdate > tunnel.log 2>&1 &
+        
+        # Wait for tunnel to initialize and capture public URL
+        while ! grep -q 'https://.*trycloudflare.com' tunnel.log; do
+          sleep 1
+        done
+        PUBLIC_URL=$(grep -oE 'https://.*trycloudflare.com' tunnel.log | head -n 1)
+        echo "🚀 Public tunnel URL: $PUBLIC_URL"
 
     - name: Install dependencies
       run: npm install
