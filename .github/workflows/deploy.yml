@@ -25,4 +25,11 @@ jobs:
       run: npm install
 
     - name: Start application
-      run: npm start
+      run: npm start &
+      # '&' runs it in the background
+
+    - name: Install ngrok
+      run: npm install -g ngrok
+
+    - name: Start ngrok tunnel
+      run: ngrok http 3000
