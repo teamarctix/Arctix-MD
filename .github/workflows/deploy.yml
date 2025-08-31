@@ -1,4 +1,4 @@
-name: Node.js CI with Persistent Cloudflare Tunnel
+name: Node.js CI with Direct Cloudflare Tunnel
 
 on:
   workflow_dispatch:
@@ -27,6 +27,7 @@ jobs:
       run: |
         npm start &
         echo "Node.js app started on port 3000"
+        sleep 2  # give the app a moment to start
 
     - name: Install official cloudflared
       run: |
@@ -34,14 +35,11 @@ jobs:
         sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
         sudo chmod +x /usr/local/bin/cloudflared
 
-    - name: Start Cloudflare Tunnel (no token)
+    - name: Start Cloudflare Tunnel (direct URL)
       run: |
-        # Start tunnel in background and log URL
-        cloudflared tunnel --url http://localhost:3000 > tunnel.log 2>&1 &
-        echo "Tunnel started, waiting for URL..."
-        # Wait for tunnel URL to appear in log
-        while ! grep -q 'https://.*trycloudflare.com' tunnel.log; do
-          sleep 1
-        done
-        # Continuously output the URL in logs
-        tail -f tunnel.log | grep --line-buffered -oE 'https://.*trycloudflare.com'
+        # Start tunnel and fetch URL directly
+        TUNNEL_URL=$(cloudflared tunnel --url http://localhost:3000 --no-autoupdate --print-url)
+        echo "🚀 Public tunnel URL: $TUNNEL_URL"
+
+        # Keep tunnel running and stream logs
+        cloudflared tunnel --url http://localhost:3000 --no-autoupdate
