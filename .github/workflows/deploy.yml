@@ -1,4 +1,4 @@
-name: Node.js CI with Direct Cloudflare Tunnel
+name: Node.js CI with Tunnel First
 
 on:
   workflow_dispatch:
@@ -20,26 +20,24 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies
-      run: npm install
-
-    - name: Start Node.js app
-      run: |
-        npm start &
-        echo "Node.js app started on port 3000"
-        sleep 2  # give the app a moment to start
-
     - name: Install official cloudflared
       run: |
         curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
         sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
         sudo chmod +x /usr/local/bin/cloudflared
 
-    - name: Start Cloudflare Tunnel (direct URL)
+    - name: Start Cloudflare Tunnel (no token)
       run: |
-        # Start tunnel and fetch URL directly
-        TUNNEL_URL=$(cloudflared tunnel --url http://localhost:3000 --no-autoupdate --print-url)
+        echo "Starting Cloudflare Tunnel..."
+        # Start tunnel in background and fetch URL
+        TUNNEL_URL=$(cloudflared tunnel --url http://localhost:3000 --no-autoupdate --print-url &)
         echo "🚀 Public tunnel URL: $TUNNEL_URL"
+        sleep 2  # give tunnel a moment to initialize
 
-        # Keep tunnel running and stream logs
-        cloudflared tunnel --url http://localhost:3000 --no-autoupdate
+    - name: Install dependencies
+      run: npm install
+
+    - name: Start Node.js app
+      run: |
+        echo "Starting Node.js app..."
+        npm start
