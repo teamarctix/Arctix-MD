@@ -25,7 +25,7 @@ jobs:
 
     - name: Start Node.js app
       run: npm start &
-      # run in background so tunnel can start
+      # run in background
 
     - name: Install official cloudflared
       run: |
@@ -33,12 +33,10 @@ jobs:
         sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
         sudo chmod +x /usr/local/bin/cloudflared
 
-    - name: Start Cloudflare Tunnel
-      env:
-        TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+    - name: Start Cloudflare Tunnel (no token)
       run: |
-        # Start tunnel in background and log URL
-        cloudflared tunnel --url http://localhost:3000 --no-autoupdate --token $TUNNEL_TOKEN > tunnel.log 2>&1 &
+        # Start tunnel and log URL
+        cloudflared tunnel --url http://localhost:3000 > tunnel.log 2>&1 &
         sleep 5
-        # Print public URL
+        # Print the public URL
         grep -oE 'https://.*trycloudflare.com' tunnel.log
