@@ -1,11 +1,10 @@
-name: Node.js CI
+name: Node.js CI with Cloudflare Tunnel
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,12 +23,22 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Start application
+    - name: Start Node.js app
       run: npm start &
-      # '&' runs it in the background
+      # run in background so tunnel can start
 
-    - name: Install ngrok
-      run: npm install -g ngrok
+    - name: Install official cloudflared
+      run: |
+        curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+        sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+        sudo chmod +x /usr/local/bin/cloudflared
 
-    - name: Start ngrok tunnel
-      run: ngrok http 3000
+    - name: Start Cloudflare Tunnel
+      env:
+        TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+      run: |
+        # Start tunnel in background and log URL
+        cloudflared tunnel --url http://localhost:3000 --no-autoupdate --token $TUNNEL_TOKEN > tunnel.log 2>&1 &
+        sleep 5
+        # Print public URL
+        grep -oE 'https://.*trycloudflare.com' tunnel.log
